@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    schemas: smg
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: smg
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+logging:
+  file:
+    name: ${LOG_PATH}/smg.log
+  level:
+    root: ${LOG_LEVEL}
+    org:
+      springframework:
+        web: INFO
+      hibernate: ERROR
+
+service:
+  kafka:
+    topic_name: ${TOPIC_NAME}
+    partition_count: 2
+    replica_count: 1

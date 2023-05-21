@@ -1,0 +1,71 @@
+version: '3'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    networks:
+      - intranet
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    networks:
+      - intranet
+  
+  rds:
+    image: "postgres:latest"
+    container_name: rds
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USERNAME}
+    networks:
+      - intranet
+
+  dummy_consumer:
+    restart: on-failure
+    depends_on:
+      - kafka
+    build: ./smg_consumer
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+    volumes:
+      - "./dummylog:/var/log"
+    networks:
+      - intranet
+
+  smg_core:
+    restart: on-failure
+    depends_on:
+      - kafka
+      - rds
+      - dummy_consumer
+    build: ./smg_core
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:postgresql://rds:5432/postgres
+      - KAFKA_BROKERS=kafka:9092
+    env_file:
+      - .env
+    volumes:
+      - "./log:/var/log"
+    networks:
+      - intranet
+networks:
+  intranet:
+    name: intranet

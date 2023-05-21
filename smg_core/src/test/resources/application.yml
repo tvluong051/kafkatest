@@ -1,0 +1,21 @@
+---
+spring:
+  profiles: integration
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  datasource:
+    url: jdbc:h2:mem:integrationTestDb;MODE=MYSQL
+    username: sa
+    password:
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+service:
+  kafka:
+    topic_name: test-topic
+    partition_count: 1
+    replica_count: 1
